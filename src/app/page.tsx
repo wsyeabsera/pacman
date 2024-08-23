@@ -14,7 +14,7 @@ const PacmanGame = () => {
   const [isGameOver, setIsGameOver] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
 
-  const monsterIntervalRef = useRef(null);
+  const monsterIntervalRef = useRef<null | NodeJS.Timeout>(null);
 
   useEffect(() => {
     const newDots = dots.filter(dot => {
