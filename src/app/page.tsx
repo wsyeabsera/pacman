@@ -12,7 +12,7 @@ const PacmanGame = () => {
   const [dots, setDots] = useState(initialDots);
   const [monsterPosition, setMonsterPosition] = useState({ top: 150, left: 150 });
   const [isGameOver, setIsGameOver] = useState(false);
-  const [missionComplete, setMissionComplete] = useState(true);
+  const [missionComplete, setMissionComplete] = useState(false);
 
   const monsterIntervalRef = useRef(null);
 
