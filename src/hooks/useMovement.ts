@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const useMovement = (obstacles: { top: number; left: number; width: number; height: number }[]) => {
   const [pacmanPosition, setPacmanPosition] = useState({ top: 60, left: 50 });
   const [direction, setDirection] = useState<string | null>(null);
   const [moveInterval, setMoveInterval] = useState<NodeJS.Timeout | null>(null);
-
+  
+  
   const movePacman = (direction: string) => {
     setPacmanPosition((prevPosition) => {
       let newPosition = { ...prevPosition };
@@ -87,7 +88,7 @@ const useMovement = (obstacles: { top: number; left: number; width: number; heig
 
   return {
     pacmanPosition,
-    direction,
+    direction
   };
 };
 

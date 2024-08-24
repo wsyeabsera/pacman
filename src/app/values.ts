@@ -130,10 +130,6 @@ const obstaclesMatrix = [
 
 ];
 
-const removeDotIfTouched = (pacman: { top: number, left: number }, dots: { top: number, left: number }[]) => {
-  return dots.filter(dot => !(Math.abs(dot.top - pacman.top) < 5 && Math.abs(dot.left - pacman.left) < 5));
-}
-
 const generateRightDots = (top: number, left: number, count: number) => {
   const dots = [];
   for (let i = 0; i < count; i++) {
@@ -198,4 +194,4 @@ const initialDots: any[] = [
 ];
 
 
-export { obstaclesMatrix, initialDots, removeDotIfTouched };
+export { obstaclesMatrix, initialDots };

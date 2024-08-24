@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react';
 import useMovement from '../hooks/useMovement';
-import { initialDots, obstaclesMatrix, removeDotIfTouched, WallTypes } from './values';
+import { initialDots, obstaclesMatrix, WallTypes } from './values';
 import Image from 'next/image';
 
 const PacmanGame = () => {
@@ -13,9 +13,11 @@ const PacmanGame = () => {
   const [monsterPosition, setMonsterPosition] = useState({ top: 150, left: 150 });
   const [isGameOver, setIsGameOver] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
+  const eatDotSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const monsterIntervalRef = useRef<null | NodeJS.Timeout>(null);
-
   useEffect(() => {
     const newDots = dots.filter(dot => {
       const distance = Math.sqrt(
@@ -24,6 +26,9 @@ const PacmanGame = () => {
       );
       return distance > 10; // Adjust the distance threshold as needed
     });
+    if (newDots.length < dots.length && eatDotSoundRef.current) {
+      eatDotSoundRef.current.play();
+    }
     setDots(newDots);
 
     if (newDots.length === 0) {
@@ -92,7 +97,7 @@ const PacmanGame = () => {
     };
 
     if (!monsterIntervalRef.current) {
-      monsterIntervalRef.current = setInterval(moveMonster, 80); // Adjust the interval as needed
+      monsterIntervalRef.current = setInterval(moveMonster, 40); // Adjust the interval as needed
     }
 
     return () => {
@@ -103,9 +108,16 @@ const PacmanGame = () => {
     };
   }, [pacmanPosition, monsterPosition, obstacles]);
 
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.play();
+    }
+  }, []);
+
   if (isGameOver) {
     return (
       <div className="bg-black flex justify-center items-center h-screen">
+        <audio ref={audioRef} src="/sounds/pacman_death.wav" autoPlay />
         <h1 className="text-white text-4xl">Game Over</h1>
       </div>
     );
@@ -124,6 +136,9 @@ const PacmanGame = () => {
 
   return (
     <div className="bg-black flex justify-center items-center h-screen">
+      <audio ref={audioRef} src="/sounds/pacman_beginning.wav" loop />
+      <audio ref={eatDotSoundRef} src="/sounds/pacman_chomp.wav" />
+
       <div className="relative w-[800px] h-[800px] bg-black">
         <div
           id="pacman"
@@ -154,7 +169,7 @@ const PacmanGame = () => {
             }}
           />
         ))}
-        {removeDotIfTouched(pacmanPosition, dots).map((dot, index) => (
+        {dots.map((dot, index) => (
           <div
             key={index}
             className="absolute w-2 h-2 rounded-full bg-yellow-500"
