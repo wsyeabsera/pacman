@@ -10,7 +10,12 @@ const PacmanGame = () => {
 
   const { pacmanPosition, direction } = useMovement(obstacles);
   const [dots, setDots] = useState(initialDots);
-  const [monsterPosition, setMonsterPosition] = useState({ top: 150, left: 150 });
+
+  const [monsterPositions, setMonsterPositions] = useState([
+    { top: 150, left: 150 },
+    { top: 150, left: 350 }
+  ]);
+
   const [isGameOver, setIsGameOver] = useState(false);
   const [missionComplete, setMissionComplete] = useState(false);
   const eatDotSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -35,69 +40,77 @@ const PacmanGame = () => {
       setMissionComplete(true);
     }
 
-    const monsterDistance = Math.sqrt(
-      Math.pow(monsterPosition.top - pacmanPosition.top, 2) +
-      Math.pow(monsterPosition.left - pacmanPosition.left, 2)
-    );
-    if (monsterDistance < 20) { // Adjust the distance threshold as needed
+    const monsterCollision = monsterPositions.some(monsterPosition => {
+      const monsterDistance = Math.sqrt(
+        Math.pow(monsterPosition.top - pacmanPosition.top, 2) +
+        Math.pow(monsterPosition.left - pacmanPosition.left, 2)
+      );
+      return monsterDistance < 20; // Adjust the distance threshold as needed
+    });
+
+    if (monsterCollision) {
       setIsGameOver(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pacmanPosition, monsterPosition]);
+  }, [pacmanPosition, monsterPositions]);
 
   useEffect(() => {
-    const moveMonster = () => {
+    const moveMonsters = () => {
       const step = 5; // Adjust the step size as needed
-      let newTop = monsterPosition.top;
-      let newLeft = monsterPosition.left;
+      const newMonsterPositions = monsterPositions.map(monsterPosition => {
+        let newTop = monsterPosition.top;
+        let newLeft = monsterPosition.left;
 
-      // Move vertically towards Pac-Man
-      if (monsterPosition.top < pacmanPosition.top) {
-        newTop += step;
-      } else if (monsterPosition.top > pacmanPosition.top) {
-        newTop -= step;
-      }
+        // Move vertically towards Pac-Man
+        if (monsterPosition.top < pacmanPosition.top) {
+          newTop += step;
+        } else if (monsterPosition.top > pacmanPosition.top) {
+          newTop -= step;
+        }
 
-      // Check for vertical collisions
-      const verticalCollision = obstacles.some(obstacle => {
-        return (
-          newTop < obstacle.top + obstacle.height &&
-          newTop + 32 > obstacle.top && // 32 is the height of the monster
-          monsterPosition.left < obstacle.left + obstacle.width &&
-          monsterPosition.left + 32 > obstacle.left // 32 is the width of the monster
-        );
+        // Check for vertical collisions
+        const verticalCollision = obstaclesMatrix.some(obstacle => {
+          return (
+            newTop < obstacle.top + obstacle.height &&
+            newTop + 32 > obstacle.top && // 32 is the height of the monster
+            newLeft < obstacle.left + obstacle.width &&
+            newLeft + 32 > obstacle.left // 32 is the width of the monster
+          );
+        });
+
+        if (verticalCollision) {
+          newTop = monsterPosition.top; // Revert to original position if collision detected
+        }
+
+        // Move horizontally towards Pac-Man
+        if (monsterPosition.left < pacmanPosition.left) {
+          newLeft += step;
+        } else if (monsterPosition.left > pacmanPosition.left) {
+          newLeft -= step;
+        }
+
+        // Check for horizontal collisions
+        const horizontalCollision = obstaclesMatrix.some(obstacle => {
+          return (
+            newTop < obstacle.top + obstacle.height &&
+            newTop + 32 > obstacle.top && // 32 is the height of the monster
+            newLeft < obstacle.left + obstacle.width &&
+            newLeft + 32 > obstacle.left // 32 is the width of the monster
+          );
+        });
+
+        if (horizontalCollision) {
+          newLeft = monsterPosition.left; // Revert to original position if collision detected
+        }
+
+        return { top: newTop, left: newLeft };
       });
 
-      if (verticalCollision) {
-        newTop = monsterPosition.top; // Revert to original position if collision detected
-      }
-
-      // Move horizontally towards Pac-Man
-      if (monsterPosition.left < pacmanPosition.left) {
-        newLeft += step;
-      } else if (monsterPosition.left > pacmanPosition.left) {
-        newLeft -= step;
-      }
-
-      // Check for horizontal collisions
-      const horizontalCollision = obstacles.some(obstacle => {
-        return (
-          newTop < obstacle.top + obstacle.height &&
-          newTop + 32 > obstacle.top && // 32 is the height of the monster
-          newLeft < obstacle.left + obstacle.width &&
-          newLeft + 32 > obstacle.left // 32 is the width of the monster
-        );
-      });
-
-      if (horizontalCollision) {
-        newLeft = monsterPosition.left; // Revert to original position if collision detected
-      }
-
-      setMonsterPosition({ top: newTop, left: newLeft });
+      setMonsterPositions(newMonsterPositions);
     };
 
     if (!monsterIntervalRef.current) {
-      monsterIntervalRef.current = setInterval(moveMonster, 40); // Adjust the interval as needed
+      monsterIntervalRef.current = setInterval(moveMonsters, 40); // Adjust the interval as needed
     }
 
     return () => {
@@ -106,7 +119,7 @@ const PacmanGame = () => {
         monsterIntervalRef.current = null;
       }
     };
-  }, [pacmanPosition, monsterPosition, obstacles]);
+  }, [pacmanPosition, monsterPositions]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -179,11 +192,14 @@ const PacmanGame = () => {
             }}
           ></div>
         ))}
-        <div
-          id="monster"
-          className="absolute w-8 h-8 rounded-full bg-[url('/assets/monster.gif')] object-fill bg-contain"
-          style={{ top: monsterPosition.top, left: monsterPosition.left }}
-        />
+        {monsterPositions.map((monsterPosition, index) => (
+          <div
+            key={index}
+            id={`monster-${index}`}
+            className="absolute w-8 h-8 rounded-full bg-[url('/assets/monster.gif')] object-fill bg-contain"
+            style={{ top: monsterPosition.top, left: monsterPosition.left }}
+          />
+        ))}
 
       </div>
       {missionComplete && (
